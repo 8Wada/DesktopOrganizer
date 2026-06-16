@@ -1,0 +1,265 @@
+<Window
+    x:Class="DesktopOrganizer.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:models="using:DesktopOrganizer.Models"
+    Title="Desktop Organizer">
+
+    <Window.SystemBackdrop>
+        <MicaBackdrop Kind="BaseAlt"/>
+    </Window.SystemBackdrop>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="48"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- ══ Barra de título personalizada ══ -->
+        <Grid Grid.Row="0" x:Name="AppTitleBar" Background="Transparent">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="16,0,0,0" Spacing="10">
+                <FontIcon Glyph="&#xE8F1;" FontSize="15" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"/>
+                <TextBlock Text="Desktop Organizer"
+                           Style="{StaticResource BodyStrongTextBlockStyle}"
+                           VerticalAlignment="Center"/>
+            </StackPanel>
+        </Grid>
+
+        <!-- ══ Tarjeta: selector de carpeta ══ -->
+        <Border Grid.Row="1"
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1" CornerRadius="8"
+                Margin="16,0,16,8" Padding="16,12">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <FontIcon Grid.Column="0" Glyph="&#xE8B7;" FontSize="18"
+                          Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                          VerticalAlignment="Center" Margin="0,0,12,0"/>
+
+                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
+                    <TextBlock Text="Carpeta de escritorio"
+                               Style="{StaticResource CaptionTextBlockStyle}"
+                               Opacity="0.6"/>
+                    <TextBlock x:Name="PathText"
+                               Style="{StaticResource BodyTextBlockStyle}"
+                               TextTrimming="CharacterEllipsis"/>
+                </StackPanel>
+
+                <Button Grid.Column="2" x:Name="ChangeFolderButton"
+                        Content="Cambiar" Margin="10,0,8,0"
+                        VerticalAlignment="Center"
+                        Click="ChangeFolderButton_Click"/>
+
+                <Button Grid.Column="3" x:Name="ScanButton"
+                        Style="{StaticResource AccentButtonStyle}"
+                        VerticalAlignment="Center"
+                        Click="ScanButton_Click">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <FontIcon Glyph="&#xE721;" FontSize="13"/>
+                        <TextBlock Text="Escanear"/>
+                    </StackPanel>
+                </Button>
+            </Grid>
+        </Border>
+
+        <!-- ══ Barra de estadísticas / Configuración ignorados ══ -->
+        <Grid Grid.Row="2" Margin="16,0,16,8" x:Name="StatsBar" Visibility="Collapsed">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <TextBlock x:Name="StatsText" Grid.Column="0"
+                       VerticalAlignment="Center"
+                       Style="{StaticResource BodyStrongTextBlockStyle}"/>
+
+            <Button Grid.Column="1" Content="Seleccionar todo"
+                    Margin="0,0,6,0" Padding="10,5"
+                    VerticalAlignment="Center"
+                    Click="SelectAll_Click"/>
+
+            <Button Grid.Column="2" Content="Ninguno"
+                    Margin="0,0,6,0" Padding="10,5"
+                    VerticalAlignment="Center"
+                    Click="DeselectAll_Click"/>
+
+            <ToggleButton Grid.Column="3" x:Name="SettingsToggle"
+                          Padding="10,5"
+                          VerticalAlignment="Center"
+                          ToolTipService.ToolTip="Carpetas ignoradas"
+                          Checked="SettingsToggle_Checked"
+                          Unchecked="SettingsToggle_Unchecked">
+                <FontIcon Glyph="&#xE713;" FontSize="14"/>
+            </ToggleButton>
+        </Grid>
+
+        <!-- ══ Área principal ══ -->
+        <Grid Grid.Row="3" Margin="16,0,16,0">
+
+            <!-- Estado vacío -->
+            <StackPanel x:Name="EmptyState"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Spacing="14">
+                <FontIcon Glyph="&#xE8F1;" FontSize="64" Opacity="0.18"
+                          HorizontalAlignment="Center"/>
+                <TextBlock Text="Haz clic en Escanear para ver los archivos del escritorio"
+                           Style="{StaticResource BodyTextBlockStyle}"
+                           Opacity="0.40" TextAlignment="Center"
+                           MaxWidth="320"/>
+            </StackPanel>
+
+            <!-- Panel de ajustes (carpetas ignoradas) -->
+            <Border x:Name="SettingsPanel"
+                    Visibility="Collapsed"
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1" CornerRadius="8" Padding="16">
+                <StackPanel Spacing="12">
+                    <TextBlock Text="Carpetas ignoradas"
+                               Style="{StaticResource BodyStrongTextBlockStyle}"/>
+                    <TextBlock Text="Estas carpetas no se moverán ni se analizarán su contenido."
+                               Style="{StaticResource CaptionTextBlockStyle}"
+                               Opacity="0.7" TextWrapping="Wrap"/>
+                    <TextBox x:Name="IgnoredFoldersBox"
+                             PlaceholderText="Ej: SICEUC, UCOL, colsoft (separados por coma)"
+                             TextWrapping="Wrap" AcceptsReturn="False"
+                             TextChanged="IgnoredFoldersBox_TextChanged"/>
+                    <TextBlock Text="Carpeta base (Archivos Varios)"
+                               Style="{StaticResource BodyStrongTextBlockStyle}"
+                               Margin="0,8,0,0"/>
+                    <TextBox x:Name="BaseFolderBox"
+                             PlaceholderText="Nombre de la carpeta base"
+                             TextChanged="BaseFolderBox_TextChanged"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Lista de archivos -->
+            <Grid x:Name="ResultsPanel" Visibility="Collapsed">
+                <ListView x:Name="PreviewList"
+                          SelectionMode="None"
+                          ItemsSource="{x:Bind PreviewItems}">
+                    <ListView.ItemContainerStyle>
+                        <Style TargetType="ListViewItem" BasedOn="{StaticResource DefaultListViewItemStyle}">
+                            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                            <Setter Property="Padding" Value="8,4"/>
+                        </Style>
+                    </ListView.ItemContainerStyle>
+                    <ListView.ItemTemplate>
+                        <DataTemplate x:DataType="models:FilePreviewItem">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="32"/>
+                                    <ColumnDefinition Width="28"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="160"/>
+                                </Grid.ColumnDefinitions>
+
+                                <CheckBox Grid.Column="0"
+                                          IsChecked="{x:Bind IsSelected, Mode=TwoWay}"
+                                          IsEnabled="{x:Bind WillMove}"
+                                          MinWidth="0" Padding="0"
+                                          HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"/>
+
+                                <TextBlock Grid.Column="1"
+                                           Text="{x:Bind Icon}"
+                                           FontSize="15"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"/>
+
+                                <TextBlock Grid.Column="2"
+                                           Text="{x:Bind Name}"
+                                           Opacity="{x:Bind NameOpacity}"
+                                           VerticalAlignment="Center"
+                                           TextTrimming="CharacterEllipsis"
+                                           ToolTipService.ToolTip="{x:Bind Name}"
+                                           Margin="6,0,0,0"/>
+
+                                <FontIcon Grid.Column="3"
+                                          Glyph="&#xE76C;"
+                                          FontSize="10"
+                                          Opacity="0.35"
+                                          Margin="8,0"
+                                          VerticalAlignment="Center"
+                                          Visibility="{x:Bind ArrowVisibility}"/>
+
+                                <TextBlock Grid.Column="4"
+                                           Text="{x:Bind DestinationDisplay}"
+                                           VerticalAlignment="Center"
+                                           Opacity="0.6"
+                                           TextTrimming="CharacterEllipsis"
+                                           Style="{StaticResource CaptionTextBlockStyle}"/>
+                            </Grid>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+            </Grid>
+        </Grid>
+
+        <!-- ══ Barra inferior ══ -->
+        <Grid Grid.Row="4" Margin="16,8,16,16">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <InfoBar Grid.Row="0"
+                     x:Name="StatusBar"
+                     IsOpen="False"
+                     IsClosable="True"
+                     Margin="0,0,0,8"/>
+
+            <Grid Grid.Row="1" x:Name="ProgressSection" Visibility="Collapsed" Margin="0,0,0,8">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <TextBlock x:Name="ProgressLabel" Grid.Row="0"
+                           Style="{StaticResource CaptionTextBlockStyle}"
+                           Opacity="0.65" Margin="0,0,0,4"/>
+                <ProgressBar x:Name="OrganizeProgress" Grid.Row="1"
+                             Minimum="0" Maximum="100" Value="0"/>
+            </Grid>
+
+            <Grid Grid.Row="2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock x:Name="StatusText"
+                           Grid.Column="0"
+                           VerticalAlignment="Center"
+                           Opacity="0.50"
+                           Style="{StaticResource CaptionTextBlockStyle}"/>
+
+                <Button Grid.Column="1"
+                        x:Name="OrganizeButton"
+                        Style="{StaticResource AccentButtonStyle}"
+                        IsEnabled="False"
+                        MinWidth="210"
+                        Click="OrganizeButton_Click">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon Glyph="&#xE8F1;" FontSize="14"/>
+                        <TextBlock Text="Organizar escritorio"/>
+                    </StackPanel>
+                </Button>
+            </Grid>
+        </Grid>
+    </Grid>
+</Window>
